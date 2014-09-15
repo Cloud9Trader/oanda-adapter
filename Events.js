@@ -1,5 +1,5 @@
 /* 
- * Backbone events have the main advantage that context can be passes in as third argument, so all handlers added by a particular instance can be remove on its teardown
+ * Backbone events have the key advantage that context can be passes in as third argument, so all handlers added by a particular instance can be remove on its teardown
  * Also removes need for function binding (reduces code, plus function binding creates new function wrappers which are slower to garbage collect)
  * 
  * Usage:
@@ -13,8 +13,8 @@
  *     Events.mixin(MyConstructor.prototype);
  */
 
-var _ = require("underscore");
-var Events = require("backbone-events-standalone");
+var _ = require("underscore"),
+    Events = require("backbone-events-standalone");
 
 // Add some compatibility with node's EventEmitter.
 Events.addListener = Events.on;
