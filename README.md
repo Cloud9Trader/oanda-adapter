@@ -13,7 +13,7 @@ See also [http://developer.oanda.com/docs/].
 
 ## Installation
 
-`npm install stripe`
+`npm install oanda-adapter`
 
 ## API Overview
 
