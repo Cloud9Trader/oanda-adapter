@@ -7,7 +7,7 @@ Node.js adapter for [Oanda](http://www.oanda.com/)'s REST and streaming API.
 
 * Manages pub/sub subscriptions to live prices and events.
 
-* Attempts reconnect id keep-alive connection is lost.
+* Attempts reconnect if keep-alive connection is lost.
 
 See also [Oanda Developer's API](http://developer.oanda.com/docs/).
 
@@ -73,49 +73,49 @@ Unsubscribes from rates stream. Omitting arguments will unsubscribe all listener
 
 ### getAccounts(callback)
 
-List accounts for a user. `callback` is invoked with the following arguments:
+List accounts for a user. `callback` is called with the following arguments:
 
 * `error`
 * `accounts` Array of accounts available under current access token (or for `username` if sandbox) 
 
 ### getAccount(accountId, callback)
 
-Get account information. `callback` is invoked with the following arguments:
+Get account information. `callback` is called with the following arguments:
 
 * `error`
 * `account` Object representing account information
 
 ### getInstruments(accountId, callback)
 
-List instruments available to an account. `callback` is invoked with the following arguments:
+List instruments available to an account. `callback` is called with the following arguments:
 
 * `error`
 * `instruments` Array of available instruments
 
 ### getPrice(instrument, callback)
 
-Gets the current price of an instrument. `callback` is invoked with the following arguments:
+Gets the current price of an instrument. `callback` is called with the following arguments:
 
 * `error`
 * `price` Object representing current price
 
 ### getCandles(symbol, start, end, granularity, callback)
 
-Gets the historical price candles for an instrument. See [Oanda Docs - Retrieve Instrument History](http://developer.oanda.com/docs/v1/rates/#retrieve-instrument-history) for argument format and available values.`callback` is invoked with the following arguments:
+Gets the historical price candles for an instrument. See [Oanda Docs - Retrieve Instrument History](http://developer.oanda.com/docs/v1/rates/#retrieve-instrument-history) for argument format and available values.`callback` is called with the following arguments:
 
 * `error`
 * `candles` Array of historical price bars
 
 ### getOpenPositions(accountId, callback)
 
-Lists the open positions for an account. `callback` is invoked with the following arguments:
+Lists the open positions for an account. `callback` is called with the following arguments:
 
 * `error`
 * `positions` Array of open positions
 
 ### getOpenTrades(accountId, callback)
 
-Lists the open trades for an account. `callback` is invoked with the following arguments:
+Lists the open trades for an account. `callback` is called with the following arguments:
 
 * `error`
 * `trades` Array of open trades
@@ -138,14 +138,14 @@ The second argument, `order` is an object with the following properties:
 * {Number} `takeProfit` Optional. The take profit price.
 * {Number} `trailingStop` Optional The trailing stop distance in pips, up to one decimal place.
 
-`callback` is invoked with the following arguments:
+`callback` is called with the following arguments:
 
 * `error`
 * `confirmation` Object representing trade confirmation
 
 ### closeTrade(tradeId, callback)
 
-Closes a trade by its `tradeId`. `callback` is invoked with the following arguments:
+Closes a trade by its `tradeId`. `callback` is called with the following arguments:
 
 * `error`
 * `confirmation` Object representing trade close confirmation
