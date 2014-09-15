@@ -41,14 +41,24 @@ client.subscribeEvents(function (event) {
     // ...
 }, this);
 ```
+Optionally pass a `context` for `listener` to be bound to. `listener` is called with `event`, an object that will have a `type` property containing one of the following values:
+
+```
+MARKET_ORDER_CREATE, STOP_ORDER_CREATE, LIMIT_ORDER_CREATE, MARKET_IF_TOUCHED_ORDER_CREATE,
+ORDER_UPDATE, ORDER_CANCEL, ORDER_FILLED, TRADE_UPDATE, TRADE_CLOSE, MIGRATE_TRADE_OPEN,
+MIGRATE_TRADE_CLOSE, STOP_LOSS_FILLED, TAKE_PROFIT_FILLED, TRAILING_STOP_FILLED, MARGIN_CALL_ENTER,
+MARGIN_CALL_EXIT, MARGIN_CLOSEOUT, TRANSFER_FUNDS, DAILY_INTEREST, FEE
+```
+See [Oanda Docs - Events Streaming](http://developer.oanda.com/docs/v1/stream/#events-streaming) for more info on the various types.
+
 
 ### unsubscribeEvents([listener][, context]);
 
-Unsubscribes from events stream. Omit listener argument to unsubscribe all listeners.
+Unsubscribes from events stream. Omitting arguments will unsubscribe all listeners.
 
 ### subscribePrice(accountId, instrument, listener[, context]);
 
-Subscribes to rates stream for a single instrument. Use `getInstruments()` to retrieve list of available instruments. Note that a single keep alive request will be managed as you subscribe to various instruments.
+Subscribes to rates stream for a single instrument. Use `getInstruments()` to retrieve list of available instruments. Note that a single keep alive request will be managed as you subscribe to various instruments. Optionally pass a `context` for `listener` to be bound to.
 
 ```js
 client.subscribePrice("1234567", "EUR_USD", function (tick) {
@@ -58,7 +68,7 @@ client.subscribePrice("1234567", "EUR_USD", function (tick) {
 
 ### unsubscribePrice(instrument, listener[, context]);
 
-Unsubscribes from rates stream. Omit listener argument to unsubscribe all listeners.
+Unsubscribes from rates stream. Omitting arguments will unsubscribe all listeners.
 
 
 ### getAccounts(callback)
@@ -91,7 +101,7 @@ Gets the current price of an instrument. `callback` is invoked with the followin
 
 ### getCandles(symbol, start, end, granularity, callback)
 
-Gets the historical price candles for an instrument. See [Oanda docs](http://developer.oanda.com/docs/v1/rates/#retrieve-instrument-history) for argument format and available values.`callback` is invoked with the following arguments:
+Gets the historical price candles for an instrument. See [Oanda Docs - Retrieve Instrument History](http://developer.oanda.com/docs/v1/rates/#retrieve-instrument-history) for argument format and available values.`callback` is invoked with the following arguments:
 
 * `error`
 * `candles` Array of historical price bars
