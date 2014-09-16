@@ -94,10 +94,12 @@ OandaAdapter.prototype._streamEvents = function () {
 };
 
 OandaAdapter.prototype._onEventsResponse = function (error, body, statusCode) {
-    if (body && body.disconnect) {
-        this.trigger("message", null, "Events streaming API disconnected.\nOanda code " + body.disconnect.code + ": " + body.disconnect.message);
-    } else {
-        this.trigger("message", null, "Events streaming API disconnected with status " + statusCode);
+    if (statusCode !== 200) {
+        if (body && body.disconnect) {
+            this.trigger("message", null, "Events streaming API disconnected.\nOanda code " + body.disconnect.code + ": " + body.disconnect.message);
+        } else {
+            this.trigger("message", null, "Events streaming API disconnected with status " + statusCode);
+        }
     }
     clearTimeout(this.eventsTimeout);
     this.eventsTimeout = setTimeout(this._eventsHeartbeatTimeout.bind(this), 20000);
@@ -285,10 +287,12 @@ OandaAdapter.prototype._streamPrices = function (accountId) {
 };
 
 OandaAdapter.prototype._onPricesResponse = function (accountId, error, body, statusCode) {
-    if (body && body.disconnect) {
-        this.trigger("message", accountId, "Prices streaming API disconnected.\nOanda code " + body.disconnect.code + ": " + body.disconnect.message);
-    } else {
-        this.trigger("message", accountId, "Prices streaming API disconnected with status " + statusCode);
+    if (statusCode !== 200) {
+        if (body && body.disconnect) {
+            this.trigger("message", accountId, "Prices streaming API disconnected.\nOanda code " + body.disconnect.code + ": " + body.disconnect.message);
+        } else {
+            this.trigger("message", accountId, "Prices streaming API disconnected with status " + statusCode);
+        }
     }
     clearTimeout(this.pricesTimeout);
     this.pricesTimeout = setTimeout(this._pricesHeartbeatTimeout.bind(this), 10000);
