@@ -81,6 +81,10 @@ module.exports = {
                 callback(null, body, statusCode);
             });
 
+            response.once("error", function (error) {
+                console.error("[ERROR] Response stream errored", options.hostname, options.port, options.method, options.path, error);
+            });
+
             request.removeAllListeners();
         });
 

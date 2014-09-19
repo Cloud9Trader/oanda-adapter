@@ -112,15 +112,15 @@ OandaAdapter.prototype._onEventsData = function (update) {
         if (update) {
             try {
                 update = JSON.parse(update);
-                if (update.heartbeat) {
-                    clearTimeout(this.eventsTimeout);
-                    this.eventsTimeout = setTimeout(this._eventsHeartbeatTimeout.bind(this), 20000);
-                    return;
-                }
-                this.trigger("event", update);
             } catch (error) {
-                console.error("[ERROR] Unable to parse Oanda events subscription update", update, error);
+                return console.error("[ERROR] Unable to parse Oanda events subscription update", update, error);
             }
+            if (update.heartbeat) {
+                clearTimeout(this.eventsTimeout);
+                this.eventsTimeout = setTimeout(this._eventsHeartbeatTimeout.bind(this), 20000);
+                return;
+            }
+            this.trigger("event", update);
         }
     }.bind(this));
 };
@@ -304,18 +304,17 @@ OandaAdapter.prototype._onPricesData = function (update) {
         if (update) {
             try {
                 update = JSON.parse(update);
-                if (update.heartbeat) {
-                    clearTimeout(this.pricesTimeout);
-                    this.pricesTimeout = setTimeout(this._pricesHeartbeatTimeout.bind(this), 10000);
-                    return;
-                }
-                if (update.tick) {
-                    update.tick.time = new Date(update.tick.time);
-                    this.trigger("price/" + update.tick.instrument, update.tick);
-                }
-                
             } catch (error) {
-                console.error("[ERROR] Unable to parse Oanda price subscription update", update, error);
+                return console.error("[ERROR] Unable to parse Oanda price subscription update", update, error);
+            }
+            if (update.heartbeat) {
+                clearTimeout(this.pricesTimeout);
+                this.pricesTimeout = setTimeout(this._pricesHeartbeatTimeout.bind(this), 10000);
+                return;
+            }
+            if (update.tick) {
+                update.tick.time = new Date(update.tick.time);
+                this.trigger("price/" + update.tick.instrument, update.tick);
             }
         }
     }.bind(this));

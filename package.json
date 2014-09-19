@@ -1,6 +1,6 @@
 {
   "name": "oanda-adapter",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Node.js adapter for Oanda's REST and streaming API.",
   "homepage": "https://github.com/Cloud9Trader/oanda-adapter",
   "keywords": [
