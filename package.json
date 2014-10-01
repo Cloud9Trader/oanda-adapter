@@ -1,6 +1,6 @@
 {
   "name": "oanda-adapter",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Node.js adapter for Oanda's REST and streaming API.",
   "homepage": "https://github.com/Cloud9Trader/oanda-adapter",
   "keywords": [
@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "backbone-events-standalone": "~0.2.1",
-    "underscore": "~1.4.4"
+    "underscore": "~1.6.0"
   },
   "bugs": {
     "url": "https://github.com/Cloud9Trader/oanda-adapter/issues"
@@ -27,4 +27,3 @@
   "main": "OandaAdapter.js",
   "license": "MIT"
 }
-
