@@ -40,6 +40,9 @@ function OandaAdapter (config) {
     }
 
     this.subscriptions = {};
+
+    this._eventsBuffer = [];
+    this._pricesBuffer = [];
 }
 
 Events.mixin(OandaAdapter.prototype);
@@ -105,16 +108,27 @@ OandaAdapter.prototype._onEventsResponse = function (error, body, statusCode) {
     this.eventsTimeout = setTimeout(this._eventsHeartbeatTimeout.bind(this), 20000);
 };
 
-OandaAdapter.prototype._onEventsData = function (update) {
+OandaAdapter.prototype._onEventsData = function (data) {
 
-    // Single chunks sometimes contain more than one tick. Each always end with /r/n. Whole chunk therefore not JSON parsable, so must split.
-    update.split(/\r\n/).forEach(function (update) {
-        if (update) {
+    // Single chunks sometimes contain more than one event. Each always end with /r/n. Whole chunk therefore not JSON parsable, so must split.
+    // Also, an event may be split accross data chunks, so must buffer.
+    data.split(/\r\n/).forEach(function (line) {
+        var update;
+        if (line) {
+            this._eventsBuffer.push(line);
             try {
-                update = JSON.parse(update);
+                update = JSON.parse(this._eventsBuffer.join(""));
             } catch (error) {
-                return console.error("[ERROR] Unable to parse Oanda events subscription update", update, error);
+                if (this._eventsBuffer.length <= 5) {
+                    // Wait for next line.
+                    return;
+                }
+                console.error("[ERROR] Unable to parse Oanda events subscription update", this._eventsBuffer.join("\n"), error);
+                this._eventsBuffer = [];
+                return;
             }
+            this._eventsBuffer = [];
+
             if (update.heartbeat) {
                 clearTimeout(this.eventsTimeout);
                 this.eventsTimeout = setTimeout(this._eventsHeartbeatTimeout.bind(this), 20000);
@@ -122,14 +136,13 @@ OandaAdapter.prototype._onEventsData = function (update) {
             }
             this.trigger("event", update);
         }
-    }.bind(this));
+    }, this);
 };
 
 OandaAdapter.prototype._eventsHeartbeatTimeout = function () {
     console.warn("[WARN] OandaAdapter: No heartbeat received from events stream for 20 seconds. Reconnecting.");
     this._streamEvents();
 };
-
 
 OandaAdapter.prototype.getAccounts = function (callback) {
 
@@ -298,15 +311,28 @@ OandaAdapter.prototype._onPricesResponse = function (accountId, error, body, sta
     this.pricesTimeout = setTimeout(this._pricesHeartbeatTimeout.bind(this), 10000);
 };
 
-OandaAdapter.prototype._onPricesData = function (update) {
-    // Single chunks sometimes contain more than one tick. Each always end with /r/n. Whole chunk therefore not JSON parsable, so must split.
-    update.split(/\r\n/).forEach(function (update) {
-        if (update) {
+OandaAdapter.prototype._onPricesData = function (data) {
+
+    // Single data chunks sometimes contain more than one tick. Each always end with /r/n. Whole chunk therefore not JSON parsable, so must split.
+    // A tick may also be split accross data chunks, so must buffer
+    data.split(/\r\n/).forEach(function (line) {
+        var update;
+        if (line) {
+            this._pricesBuffer.push(line);
             try {
-                update = JSON.parse(update);
+                update = JSON.parse(this._pricesBuffer.join(""));
             } catch (error) {
-                return console.error("[ERROR] Unable to parse Oanda price subscription update", update, error);
+                if (this._pricesBuffer.length <= 5) {
+                    // Wait for next update.
+                    return;
+                }
+                // Drop if cannot produce object after 5 updates
+                console.error("[ERROR] Unable to parse Oanda price subscription update", this._pricesBuffer.join("\n"), error);
+                this._pricesBuffer = [];
+                return;
             }
+            this._pricesBuffer = [];
+
             if (update.heartbeat) {
                 clearTimeout(this.pricesTimeout);
                 this.pricesTimeout = setTimeout(this._pricesHeartbeatTimeout.bind(this), 10000);
@@ -317,7 +343,7 @@ OandaAdapter.prototype._onPricesData = function (update) {
                 this.trigger("price/" + update.tick.instrument, update.tick);
             }
         }
-    }.bind(this));
+    }, this);
 };
 
 OandaAdapter.prototype._pricesHeartbeatTimeout = function () {
