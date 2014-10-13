@@ -8,11 +8,13 @@ module.exports = {
 
         var options,
             request,
-            keepAlive;
+            keepAlive,
+            timeout = 5000;
 
         if (typeof hostname === "object") {
             options = hostname;
             data = hostname.data;
+            timeout = options.timeout || timeout;
             callback = port;
             onData = method;
         } else {
@@ -26,7 +28,7 @@ module.exports = {
 
         keepAlive = options.headers && options.headers.Connection === "Keep-Alive";
 
-        console.info("[INFO] Sending request to", options.hostname, (options.port || ""), options.method, options.path);
+        console.info("[INFO]  HTTPS OUT", options.hostname, options.port, options.method, options.path);
 
         if (options.secure === false) {
             request = http.request(options);
@@ -68,35 +70,35 @@ module.exports = {
                     try {
                         body = JSON.parse(body);
                     } catch (error) {
-                        console.error("[ERROR] Could not parse response body from", options.hostname, (options.port || ""), options.method, options.path, body.length);
+                        console.warn("[WARN]  HTTPS IN ", options.hostname, options.port, options.method, options.path, body.length, "Could not parse response body");
                     }
                 }
 
                 if (statusCode !== 200 && statusCode !== 204 && statusCode !== 206) {
-                    console.error("[ERROR] Error response received from", options.hostname, (options.port || ""), options.method, options.path, ":", statusCode, body.length);
+                    console.error("[ERROR] HTTPS IN ", options.hostname, options.port, options.method, options.path, ":", statusCode, body.length);
                     return callback(true, body, statusCode, body); // TODO added body as second argument anyway (error responses can have a body that describes the error). Get rid of anywhere expecting it as 4th arg
                 }
                 
-                console.info("[INFO] Success response received from", options.hostname, (options.port || ""), options.method, options.path);
+                console.info("[INFO]  HTTPS IN ", options.hostname, options.port, options.method, options.path);
                 callback(null, body, statusCode);
             });
 
             response.once("error", function (error) {
-                console.error("[ERROR] Response stream errored", options.hostname, options.port, options.method, options.path, error);
+                console.error("[ERROR] HTTPS IN ", options.hostname, options.port, options.method, options.path, "Response stream errored", error);
             });
 
             request.removeAllListeners();
         });
 
         request.once("error", options.onError || function (error) {
-            console.error("[ERROR] Response from", options.hostname, (options.port || ""), options.method, options.path, error);
+            console.error("[ERROR] HTTPS IN ", options.hostname, options.port, options.method, options.path, error);
             callback(error, null, 500);
         });
 
         if (!keepAlive) {
-            request.setTimeout(5000, function () {
+            request.setTimeout(timeout, function () {
                 request.removeAllListeners();
-                console.error("[ERROR] Request timed out", options.hostname, (options.port || ""), options.method, options.path);
+                console.error("[ERROR] HTTPS IN ", options.hostname, options.port, options.method, options.path, "Timed out after " + (timeout / 1000) + "s");
                 callback("timeout", null, 508);
             });
         }

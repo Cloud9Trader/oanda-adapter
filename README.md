@@ -1,7 +1,7 @@
 oanda-adapter
 =============
 
-Node.js adapter for [Oanda](http://www.oanda.com/)'s REST and streaming API.
+Node.js adapter for [OANDA](http://www.oanda.com/)'s REST and streaming API.
 
 * Provides a single interface for requesting data and streaming prices and events.
 
@@ -9,7 +9,9 @@ Node.js adapter for [Oanda](http://www.oanda.com/)'s REST and streaming API.
 
 * Attempts reconnect if keep-alive connection is lost.
 
-See also [Oanda Developer's API](http://developer.oanda.com/docs/).
+* Rate limits REST requests according to OANDA limit (queued for delayed execution with warning logged where threshold exceeded).
+
+See also [OANDA Developer's API](http://developer.oanda.com/docs/).
 
 ## Installation
 
@@ -20,12 +22,12 @@ npm install oanda-adapter
 ## API Overview
 
 ```js
-var OandaAdapter = require('oanda-adapter');
+var OANDAAdapter = require('oanda-adapter');
 
-var client = new OandaAdapter({
+var client = new OANDAAdapter({
     // 'live', 'practice' or 'sandbox'
     environment: 'practice',
-    // Generate your API access in the 'Manage API Access' section of 'My Account' on Oanda's website
+    // Generate your API access in the 'Manage API Access' section of 'My Account' on OANDA's website
     accessToken: 'a837f0927f0b0cd630a0934059c87003-7eb890aff42eb9c985305b309a94e421',
     // Optional. Required only if evironment is 'sandbox'
     username: 'a837f0927f0b0cd630a0934059c87003-7eb890aff42eb9c985305b309a94e421'
@@ -49,7 +51,7 @@ ORDER_UPDATE, ORDER_CANCEL, ORDER_FILLED, TRADE_UPDATE, TRADE_CLOSE, MIGRATE_TRA
 MIGRATE_TRADE_CLOSE, STOP_LOSS_FILLED, TAKE_PROFIT_FILLED, TRAILING_STOP_FILLED, MARGIN_CALL_ENTER,
 MARGIN_CALL_EXIT, MARGIN_CLOSEOUT, TRANSFER_FUNDS, DAILY_INTEREST, FEE
 ```
-See [Oanda Docs - Events Streaming](http://developer.oanda.com/docs/v1/stream/#events-streaming) for more info on the various types.
+See [OANDA Docs - Events Streaming](http://developer.oanda.com/docs/v1/stream/#events-streaming) for more info on the various types.
 
 
 ### unsubscribeEvents([listener][, context]);
@@ -94,14 +96,14 @@ List instruments available to an account. `callback` is called with the followin
 
 ### getPrice(instrument, callback)
 
-Gets the current price of an instrument. `callback` is called with the following arguments:
+Gets the current price of an instrument. `instrument` can be an array to retrive multiple prices. `callback` is called with the following arguments:
 
 * `error`
 * `price` Object representing current price
 
 ### getCandles(symbol, start, end, granularity, callback)
 
-Gets the historical price candles for an instrument. See [Oanda Docs - Retrieve Instrument History](http://developer.oanda.com/docs/v1/rates/#retrieve-instrument-history) for argument format and available values.`callback` is called with the following arguments:
+Gets the historical price candles for an instrument. See [OANDA Docs - Retrieve Instrument History](http://developer.oanda.com/docs/v1/rates/#retrieve-instrument-history) for argument format and available values.`callback` is called with the following arguments:
 
 * `error`
 * `candles` Array of historical price bars

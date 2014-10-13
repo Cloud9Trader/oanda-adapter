@@ -1,7 +1,8 @@
 var _ = require("underscore"),
     Events = require("./Events"),
     querystring = require("querystring"),
-    httpClient = require("./httpClient");
+    httpClient = require("./httpClient"),
+    utils = require("./utils");
 
 var environments = {
     sandbox: {
@@ -18,6 +19,9 @@ var environments = {
         streamHost: "stream-fxtrade.oanda.com"
     }
 };
+
+var maxRequestsPerSecond = 15,
+    maxRequestsWarningThreshold = 1000;
 
 /*
  * config.environment
@@ -43,6 +47,8 @@ function OandaAdapter (config) {
 
     this._eventsBuffer = [];
     this._pricesBuffer = [];
+
+    this._sendRESTRequest = utils.rateLimit(this._sendRESTRequest, this, 1000 / maxRequestsPerSecond, maxRequestsWarningThreshold);
 }
 
 Events.mixin(OandaAdapter.prototype);
@@ -146,88 +152,67 @@ OandaAdapter.prototype._eventsHeartbeatTimeout = function () {
 
 OandaAdapter.prototype.getAccounts = function (callback) {
 
-    httpClient.sendRequest({
-            hostname: this.restHost,
-            method: "GET",
-            path: "/v1/accounts" + (this.username ? "?username=" + this.username : ""),
-            headers: {
-                Authorization: "Bearer " + this.accessToken
-            },
-            secure: this.secure
-        },
-        callback
-    );
+    this._sendRESTRequest({
+        method: "GET",
+        path: "/v1/accounts" + (this.username ? "?username=" + this.username : "")
+    }, callback);
 };
 
 OandaAdapter.prototype.getAccount = function (accountId, callback) {
 
-    httpClient.sendRequest({
-            hostname: this.restHost,
-            method: "GET",
-            path: "/v1/accounts/" + accountId,
-            headers: {
-                Authorization: "Bearer " + this.accessToken
-            },
-            secure: this.secure
-        },
-        callback
-    );
+    this._sendRESTRequest({
+        method: "GET",
+        path: "/v1/accounts/" + accountId
+    }, callback);
 };
 
 OandaAdapter.prototype.getInstruments = function (accountId, callback) {
 
-    httpClient.sendRequest({
-            hostname: this.restHost,
-            method: "GET",
-            path: "/v1/instruments?accountId=" + accountId + "&fields=" + ["instrument", "displayName", "pip", "maxTradeUnits", "precision", "maxTrailingStop", "minTrailingStop", "marginRate", "halted"].join("%2C"),
-            headers: {
-                Authorization: "Bearer " + this.accessToken
-            },
-            secure: this.secure
-        },
-        function (error, body, statusCode) {
-            if (error) {
-                if (body && body.message) {
-                    console.error("[ERROR] Response from Oanda", statusCode + " Error: " + body.message + " (Oanda error code " + body.code + ")");
-                    return callback(body.message);
-                }
-                return callback(error);
+    this._sendRESTRequest({
+        method: "GET",
+        path: "/v1/instruments?accountId=" + accountId + "&fields=" + ["instrument", "displayName", "pip", "maxTradeUnits", "precision", "maxTrailingStop", "minTrailingStop", "marginRate", "halted"].join("%2C"),
+    },
+    function (error, body, statusCode) {
+        if (error) {
+            if (body && body.message) {
+                console.error("[ERROR] Response from Oanda", statusCode + " Error: " + body.message + " (OANDA error code " + body.code + ")");
+                return callback(body.message);
             }
-            if (body.instruments) {
-                callback(null, body.instruments);
-            } else {
-                callback("Unexpected instruments response");
-            }
+            return callback(error);
         }
-    );
+        if (body.instruments) {
+            callback(null, body.instruments);
+        } else {
+            callback("Unexpected instruments response");
+        }
+    });
 };
 
 OandaAdapter.prototype.getPrice = function (symbol, callback) {
 
-    httpClient.sendRequest({
-            hostname: this.restHost,
-            method: "GET",
-            path: "/v1/prices?instruments=" + symbol,
-            headers: {
-                Authorization: "Bearer " + this.accessToken
-            },
-            secure: this.secure
-        },
-        function (error, body, statusCode) {
-            if (error) {
-                if (body && body.message) {
-                    console.error("[ERROR] Response from Oanda", statusCode + " Error: " + body.message + " (Oanda error code " + body.code + ")");
-                    return callback(body.message);
-                }
-                return callback(error);
+    var multiple = _.isArray(symbol);
+
+    if (multiple) {
+        symbol = symbol.join("%2C");
+    }
+
+    this._sendRESTRequest({
+        method: "GET",
+        path: "/v1/prices?instruments=" + symbol
+    }, function (error, body, statusCode) {
+        if (error) {
+            if (body && body.message) {
+                console.error("[ERROR] Response from Oanda", statusCode + " Error: " + body.message + " (OANDA error code " + body.code + ")");
+                return callback(body.message);
             }
-            if (body && body.prices[0]) {
-                callback(null, body.prices[0]);
-            } else {
-                callback("Unexpected price response for " + symbol);
-            }
+            return callback(error);
         }
-    );
+        if (body && body.prices[0]) {
+            callback(null, multiple ? body.prices : body.prices[0]);
+        } else {
+            callback("Unexpected price response for " + symbol);
+        }
+    });
 };
 
 OandaAdapter.prototype.subscribePrice = function (accountId, symbol, listener, context) {
@@ -353,97 +338,79 @@ OandaAdapter.prototype._pricesHeartbeatTimeout = function () {
 
 OandaAdapter.prototype.getCandles = function (symbol, start, end, granularity, callback) {
 
-    httpClient.sendRequest({
-            hostname: this.restHost,
-            method: "GET",
-            path: "/v1/candles?" + querystring.stringify({
-                instrument: symbol,
-                start: new Date(start).getTime(),
-                end: new Date(end).getTime(),
-                granularity: granularity,
-                alignmentTimezone: "GMT0",
-                dailyAlignment: 0
-            }),
-            headers: {
-                Authorization: "Bearer " + this.accessToken,
-                "X-Accept-Datetime-Format": "UNIX"
-            },
-            secure: this.secure
-        },
-        function (error, body, statusCode) {
-            if (error) {
-                if (body && body.message) {
-                    console.error("[ERROR] Response from Oanda", statusCode + " Error: " + body.message + " (Oanda error code " + body.code + ")");
-                    return callback(body.message);
-                }
-                return callback(error);
-            }
-            if (body && body.candles) {
-                callback(null, body.candles);
-            } else if (body === "") {
-                // Body is an empty string if there are no candles to return
-                callback(null, []);
-            } else {
-                callback("Unexpected candles response for " + symbol);
-            }
+    this._sendRESTRequest({
+        method: "GET",
+        path: "/v1/candles?" + querystring.stringify({
+            instrument: symbol,
+            start: new Date(start).getTime(),
+            end: new Date(end).getTime(),
+            granularity: granularity,
+            alignmentTimezone: "GMT0",
+            dailyAlignment: 0
+        }),
+        headers: {
+            Authorization: "Bearer " + this.accessToken,
+            "X-Accept-Datetime-Format": "UNIX"
         }
-    );
+    }, function (error, body, statusCode) {
+        if (error) {
+            if (body && body.message) {
+                console.error("[ERROR] Response from Oanda", statusCode + " Error: " + body.message + " (OANDA error code " + body.code + ")");
+                return callback(body.message);
+            }
+            return callback(error);
+        }
+        if (body && body.candles) {
+            callback(null, body.candles);
+        } else if (body === "") {
+            // Body is an empty string if there are no candles to return
+            callback(null, []);
+        } else {
+            callback("Unexpected candles response for " + symbol);
+        }
+    });
 };
 
 OandaAdapter.prototype.getOpenPositions = function (accountId, callback) {
 
-    httpClient.sendRequest({
-            hostname: this.restHost,
-            method: "GET",
-            path: "/v1/accounts/" + accountId + "/positions",
-            headers: {
-                Authorization: "Bearer " + this.accessToken
-            },
-            secure: this.secure
-        },
-        function (error, body, statusCode) {
-            if (error) {
-                if (body && body.message) {
-                    console.error("[ERROR] Response from Oanda", statusCode + " Error: " + body.message + " (Oanda error code " + body.code + ")");
-                    return callback(body.message);
-                }
-                return callback(error);
+    this._sendRESTRequest({
+        method: "GET",
+        path: "/v1/accounts/" + accountId + "/positions"
+    }, function (error, body, statusCode) {
+        if (error) {
+            if (body && body.message) {
+                console.error("[ERROR] Response from Oanda", statusCode + " Error: " + body.message + " (OANDA error code " + body.code + ")");
+                return callback(body.message);
             }
-            if (body && body.positions) {
-                callback(null, body.positions);
-            } else {
-                callback("Unexpected response for open positions");
-            }
+            return callback(error);
         }
-    );
+        if (body && body.positions) {
+            callback(null, body.positions);
+        } else {
+            callback("Unexpected response for open positions");
+        }
+    });
 };
 
 OandaAdapter.prototype.getOpenTrades = function (accountId, callback) {
 
-    httpClient.sendRequest({
-            hostname: this.restHost,
-            method: "GET",
-            path: "/v1/accounts/" + accountId + "/trades",
-            headers: {
-                Authorization: "Bearer " + this.accessToken
-            },
-            secure: this.secure
-        },
-        function (error, body, statusCode) {
-            if (error) {
-                if (body && body.message) {
-                    console.error("[ERROR] Response from Oanda", statusCode + " Error: " + body.message + " (Oanda error code " + body.code + ")");
-                    return callback(body.message);
-                }
-                return callback(error);
+    this._sendRESTRequest({
+        method: "GET",
+        path: "/v1/accounts/" + accountId + "/trades"
+    }, function (error, body, statusCode) {
+        if (error) {
+            if (body && body.message) {
+                console.error("[ERROR] Response from Oanda", statusCode + " Error: " + body.message + " (OANDA error code " + body.code + ")");
+                return callback(body.message);
             }
-            if (body && body.trades) {
-                callback(null, body.trades);
-            } else {
-                callback("Unexpected response for open trades");
-            }
+            return callback(error);
         }
-    );
+        if (body && body.trades) {
+            callback(null, body.trades);
+        } else {
+            callback("Unexpected response for open trades");
+        }
+    });
 };
 
 
@@ -486,55 +453,56 @@ OandaAdapter.prototype.createOrder = function (accountId, order, callback) {
         return callback("'price' is a required field for order type '" + order.type + "'");
     }
 
-    httpClient.sendRequest({
-            hostname: this.restHost,
-            method: "POST",
-            path: "/v1/accounts/" + accountId + "/orders",
-            data: order,
-            headers: {
-                Authorization: "Bearer " + this.accessToken,
-                "Content-Type": "application/x-www-form-urlencoded"
-            },
-            secure: this.secure
+    this._sendRESTRequest({
+        method: "POST",
+        path: "/v1/accounts/" + accountId + "/orders",
+        data: order,
+        headers: {
+            Authorization: "Bearer " + this.accessToken,
+            "Content-Type": "application/x-www-form-urlencoded"
         },
-        function (error, body, statusCode) {
-            if (error) {
-                if (body && body.message) {
-                    console.error("[ERROR] Response from Oanda", statusCode + " Error: " + body.message + " (Oanda error code " + body.code + ")");
-                    return callback(body.message);
-                }
-                return callback(error);
+    }, function (error, body, statusCode) {
+        if (error) {
+            if (body && body.message) {
+                console.error("[ERROR] Response from Oanda", statusCode + " Error: " + body.message + " (OANDA error code " + body.code + ")");
+                return callback(body.message);
             }
-            callback(null, body);
+            return callback(error);
         }
-    );
+        callback(null, body);
+    });
 };
 
 OandaAdapter.prototype.closeTrade = function (accountId, tradeId, callback) {
-    httpClient.sendRequest({
-            hostname: this.restHost,
-            method: "DELETE",
-            path: "/v1/accounts/" + accountId + "/trades/" + tradeId,
-            headers: {
-                Authorization: "Bearer " + this.accessToken
-            },
-            secure: this.secure
-        },
-        function (error, body, statusCode) {
-            if (error) {
-                if (body && body.message) {
-                    console.error("[ERROR] Response from Oanda", statusCode + " Error: " + body.message + " (Oanda error code " + body.code + ")");
-                    return callback(body.message);
-                }
-                return callback(error);
+
+    this._sendRESTRequest({
+        method: "DELETE",
+        path: "/v1/accounts/" + accountId + "/trades/" + tradeId
+    }, function (error, body, statusCode) {
+        if (error) {
+            if (body && body.message) {
+                console.error("[ERROR] Response from Oanda", statusCode + " Error: " + body.message + " (OANDA error code " + body.code + ")");
+                return callback(body.message);
             }
-            if (body) {
-                callback(null, body);
-            } else {
-                callback("Unexpected response for open positions");
-            }
+            return callback(error);
         }
-    );
+        if (body) {
+            callback(null, body);
+        } else {
+            callback("Unexpected response for open positions");
+        }
+    });
+};
+
+OandaAdapter.prototype._sendRESTRequest = function (request, callback) {
+
+    request.hostname = this.restHost;
+    request.headers = request.headers || {
+        Authorization: "Bearer " + this.accessToken
+    };
+    request.secure = this.secure;
+
+    httpClient.sendRequest(request, callback);
 };
 
 OandaAdapter.prototype.kill = function () {
