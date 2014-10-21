@@ -155,7 +155,20 @@ OandaAdapter.prototype.getAccounts = function (callback) {
     this._sendRESTRequest({
         method: "GET",
         path: "/v1/accounts" + (this.username ? "?username=" + this.username : "")
-    }, callback);
+    }, function (error, body, statusCode) {
+        if (error) {
+            if (body && body.message) {
+                console.error("[ERROR] Response from Oanda", statusCode + " Error: " + body.message + " (OANDA error code " + body.code + ")");
+                return callback(body.message);
+            }
+            return callback(error);
+        }
+        if (body.accounts) {
+            callback(null, body.accounts);
+        } else {
+            callback("Unexpected accounts response");
+        }
+    });
 };
 
 OandaAdapter.prototype.getAccount = function (accountId, callback) {
