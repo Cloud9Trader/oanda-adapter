@@ -346,6 +346,7 @@ OandaAdapter.prototype._onPricesData = function (data) {
 
 OandaAdapter.prototype._pricesHeartbeatTimeout = function () {
     console.warn("[WARN] OandaAdapter: No heartbeat received from prices stream for 10 seconds. Reconnecting.");
+    delete this.lastPriceSubscriptions;
     this._streamPrices();
 };
 
