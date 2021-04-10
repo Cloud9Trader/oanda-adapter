@@ -2,7 +2,7 @@
 
 Node.js adapter for [OANDA](http://www.oanda.com/)'s REST and streaming API, from [Cloud9Trader](https://www.cloud9trader.com).
 
--   Provides a single interface for requesting data and streaming prices and events.
+-   Provides a single interface for requesting data and streaming prices and account updates.
 
 -   Smooths over polling and streaming endpoints for account updates and pricing for consistent subscriber methods.
 
@@ -13,6 +13,8 @@ Node.js adapter for [OANDA](http://www.oanda.com/)'s REST and streaming API, fro
 -   Rate limits REST requests according to OANDA limit with automatic queuing for delayed execution and warning logs.
 
 -   Returns instances from OANDA's definitions library at [https://github.com/oanda/v20-javascript](https://github.com/oanda/v20-javascript) for editor code hinting and content assist.
+
+-   OANDA endpoints return data specific to your account. Retrieves default account ID so client does not need to specify.
 
 See also [OANDA Developer's API](https://developer.oanda.com/rest-live-v20).
 
@@ -58,9 +60,7 @@ List instruments available to an account. Pass `null` as `accountId` to use defa
 
 ### subscribePrice(accountId, instrument, listener[, context]);
 
-Subscribes to rates stream for a single instrument. Use `getInstruments()` to retrieve list of available instruments. A single streaming request will be managed as you subscribe to various instruments. Optionally pass a `context` for the `listener` to be bound to.
-
-If `null` is passed as `accountId`, the default account will be fetched.
+Subscribes to rates stream for a single instrument. Use `getInstruments()` to retrieve list of available instruments. A single streaming request will be managed as you subscribe to various instruments. If `null` is passed as `accountId`, the default account will be fetched. Optionally pass a `context` for the `listener` to be bound to.
 
 ```js
 client.subscribePrice(null, "EUR_USD", (ClientPrice) => {
@@ -79,6 +79,7 @@ List accounts for a user. `callback` is called with the following arguments:
 
 Gets the default account ID. `callback` is called with the following arguments:
 
+-   `error`
 -   `accountId`
 
 ### getAccount(accountId, callback)
@@ -88,12 +89,19 @@ Get account information. `callback` is called with the following arguments:
 -   `error`
 -   `Account` Object representing account information
 
-### getPrice(instrument, callback)
+### getPrice(accountId, instrument, callback)
 
-Gets the current price of an instrument. `instrument` can be an array to retrieve multiple prices. `callback` is called with the following arguments:
+Gets the current price of an instrument. If `null` is passed as `accountId`, the default account will be fetched. `instrument` can be an array to retrieve multiple prices. `callback` is called with the following arguments:
 
 -   `error`
 -   `ClientPrice` or `Array[ClientPrice]` Object representing current price, or array containing them.
+
+### getCandles(accountId, instrument, from, to, interval, callback)
+
+Get interval bars for `instrument` between time range. If `null` is passed as `accountId`, the default account will be fetched. `interval` is one of [`S5`, `S10`, `S15`, `S30`, `M1`, `M2`, `M4`, `M5`, `M10`, `M15`, `M30`, `H1`, `H2`, `H3`, `H4`, `H6`, `H8`, `H12`, `D`, `W`, `M`]. `from` and `to` can be dates or ISO strings. `callback` is called with the following arguments:
+
+-   `error`
+-   `Array[Candlestick]` Array of candles with bid, mid and ask ohlc and volume.
 
 ### kill()
 

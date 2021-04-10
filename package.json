@@ -1,6 +1,6 @@
 {
     "name": "oanda-adapter",
-    "version": "2.0.0",
+    "version": "2.1.0",
     "description": "Node.js adapter for OANDA's v20 REST and streaming API.",
     "homepage": "https://github.com/Cloud9Trader/oanda-adapter",
     "keywords": [
@@ -20,6 +20,7 @@
     "dependencies": {
         "@oanda/v20": "^3.0.25-0",
         "backbone-events-standalone": "~0.2.1",
+        "eslint": "^7.24.0",
         "underscore": "~1.6.0"
     },
     "bugs": {
