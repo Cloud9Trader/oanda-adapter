@@ -1,29 +1,30 @@
 {
-  "name": "oanda-adapter",
-  "version": "1.0.0",
-  "description": "Node.js adapter for OANDA's REST and streaming API.",
-  "homepage": "https://github.com/Cloud9Trader/oanda-adapter",
-  "keywords": [
-    "trading",
-    "broker",
-    "adapter",
-    "server"
-  ],
-  "author": {
-    "name": "Jon Kafton",
-    "email": "support@cloud9trader.com"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Cloud9Trader/oanda-adapter.git"
-  },
-  "dependencies": {
-    "backbone-events-standalone": "~0.2.1",
-    "underscore": "~1.6.0"
-  },
-  "bugs": {
-    "url": "https://github.com/Cloud9Trader/oanda-adapter/issues"
-  },
-  "main": "OandaAdapter.js",
-  "license": "MIT"
+    "name": "oanda-adapter",
+    "version": "2.0.0",
+    "description": "Node.js adapter for OANDA's v20 REST and streaming API.",
+    "homepage": "https://github.com/Cloud9Trader/oanda-adapter",
+    "keywords": [
+        "trading",
+        "broker",
+        "adapter",
+        "server"
+    ],
+    "author": {
+        "name": "Jon Kafton",
+        "email": "support@cloud9trader.com"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Cloud9Trader/oanda-adapter.git"
+    },
+    "dependencies": {
+        "@oanda/v20": "^3.0.25-0",
+        "backbone-events-standalone": "~0.2.1",
+        "underscore": "~1.6.0"
+    },
+    "bugs": {
+        "url": "https://github.com/Cloud9Trader/oanda-adapter/issues"
+    },
+    "main": "index.js",
+    "license": "MIT"
 }

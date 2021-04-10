@@ -1,0 +1,10 @@
+{
+    "practice": {
+        "restHost": "api-fxpractice.oanda.com",
+        "streamHost": "stream-fxpractice.oanda.com"
+    },
+    "live": {
+        "restHost": "api-fxtrade.oanda.com",
+        "streamHost": "stream-fxtrade.oanda.com"
+    }
+}

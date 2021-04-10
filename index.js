@@ -1,1 +1,1 @@
-module.exports = require("./lib/OANDAAdapter");
+module.exports = require("./lib/OANDAAdapterV20")
