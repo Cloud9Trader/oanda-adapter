@@ -1,6 +1,6 @@
 # oanda-adapter
 
-Node.js adapter for [OANDA](http://www.oanda.com/)'s REST and streaming API, from [Cloud9Trader](https://www.cloud9trader.com).
+Node.js adapter for [OANDA](http://www.oanda.com/)'s v20 REST and streaming API, from [Cloud9Trader](https://www.cloud9trader.com).
 
 -   Provides a single interface for requesting data and streaming prices and account updates.
 
