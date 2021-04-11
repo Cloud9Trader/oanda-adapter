@@ -16,7 +16,7 @@ Node.js adapter for [OANDA](http://www.oanda.com/)'s v20 REST and streaming API,
 
 -   OANDA endpoints return data specific to your account. Retrieves default account ID so client does not need to specify.
 
-See also [OANDA Developer's API](https://developer.oanda.com/rest-live-v20).
+See also [OANDA's v20 REST API documentation](https://developer.oanda.com/rest-live-v20/introduction/) for reference.
 
 ## API Compatibility
 
@@ -113,7 +113,7 @@ client.kill()
 
 ## Upcoming
 
-Implementations for historical price and trading coming in next releases.
+Implementations for trading coming in next releases.
 
 ## Author
 
