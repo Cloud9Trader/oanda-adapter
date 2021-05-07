@@ -21,7 +21,7 @@
         "@oanda/v20": "^3.0.25-0",
         "backbone-events-standalone": "~0.2.1",
         "eslint": "^7.24.0",
-        "underscore": "~1.6.0"
+        "underscore": "~1.12.1"
     },
     "bugs": {
         "url": "https://github.com/Cloud9Trader/oanda-adapter/issues"
